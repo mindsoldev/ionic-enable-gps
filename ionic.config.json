@@ -1,0 +1,7 @@
+{
+  "name": "ionic-enable-gps",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
