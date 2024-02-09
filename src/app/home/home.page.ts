@@ -16,6 +16,11 @@ export class HomePage {
   constructor(private locationAccuracy: LocationAccuracy) {}
 
   async getCurrentLocation() {
+    console.log("getPlatform: ", Capacitor.getPlatform());
+    const permissions = navigator.permissions.query({ name: "geolocation" });
+    console.log("permissions: ", permissions);
+    // const result = await this.getPosition();
+    // console.log("getposition result: ", result);
     try {
       const permissionStatus = await Geolocation.checkPermissions();
       console.log('Permission status: ', permissionStatus.location);
@@ -61,6 +66,26 @@ export class HomePage {
     if(canRequest) {
       await this.locationAccuracy.request(this.locationAccuracy.REQUEST_PRIORITY_HIGH_ACCURACY);
     }
+  }
+
+  getPosition(): Promise<any>   {
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0,
+    };
+    
+    return new Promise((resolve, reject) => {
+
+      navigator.geolocation.getCurrentPosition(resp => {
+
+          resolve({lng: resp.coords.longitude, lat: resp.coords.latitude});
+        },
+        err => {
+          reject(err);
+        },
+        options);
+    });
   }
 
 }
