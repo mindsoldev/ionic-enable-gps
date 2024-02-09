@@ -16,20 +16,22 @@ export class HomePage {
   constructor(private locationAccuracy: LocationAccuracy) {}
 
   async getCurrentLocation() {
-    console.log("getPlatform: ", Capacitor.getPlatform());
-    const permissions = navigator.permissions.query({ name: "geolocation" });
-    console.log("permissions: ", permissions);
-    // const result = await this.getPosition();
-    // console.log("getposition result: ", result);
+    const platform = Capacitor.getPlatform();
+    console.log("Platform: ", platform);
     try {
       const permissionStatus = await Geolocation.checkPermissions();
       console.log('Permission status: ', permissionStatus.location);
       if(permissionStatus?.location != 'granted') {
-        const requestStatus = await Geolocation.requestPermissions();
-        if(requestStatus.location != 'granted') {
-          // go to location settings
-          await this.openSettings(true);
+        if(platform == 'web') {
+          this.forceGeolocationSettings();
           return;
+        } else {
+          const requestStatus = await Geolocation.requestPermissions();
+          if(requestStatus.location != 'granted') {
+            // go to location settings
+            await this.openSettings(true);
+            return;
+          }
         }
       }
 
@@ -68,24 +70,30 @@ export class HomePage {
     }
   }
 
-  getPosition(): Promise<any>   {
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0,
-    };
-    
-    return new Promise((resolve, reject) => {
+  private async getWebPermission() {
+    const permissions = navigator.permissions.query({ name: "geolocation" });
+    return (await permissions).state;
+  }
 
-      navigator.geolocation.getCurrentPosition(resp => {
-
-          resolve({lng: resp.coords.longitude, lat: resp.coords.latitude});
-        },
-        err => {
-          reject(err);
-        },
-        options);
-    });
+  async forceGeolocationSettings(): Promise<any>   {
+    const webPermission = await this.getWebPermission();
+    console.log("webPermission: ", webPermission);
+    if(webPermission != 'granted') {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resp => {
+            resolve({lng: resp.coords.longitude, lat: resp.coords.latitude});
+          },
+          err => {
+            reject(err);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+          }
+        );
+      });
+    }
   }
 
 }
